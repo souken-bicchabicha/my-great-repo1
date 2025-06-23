@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ジャンプするスクエア</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden; /* スクロールバーを非表示にする */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh; /* 画面全体を使う */
+            background-color: #f0f0f0;
+            cursor: pointer; /* マウスカーソルをポインタにする */
+        }
+        canvas {
+            border: 2px solid #333; /* Canvasの境界線 */
+            background-color: #ffffff; /* Canvasの背景色 */
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        // Canvas要素と2D描画コンテキストを取得
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Canvasのサイズを設定
+        canvas.width = 600; // 幅
+        canvas.height = 400; // 高さ
+
+        // ゲームの定数
+        const GRAVITY = 0.5;      // 重力
+        const JUMP_POWER = -10;   // ジャンプ力 (上向きなので負の値)
+        const SCROLL_SPEED = 3;   // 背景と地面のスクロール速度
+
+        // --- ゲーム要素の定義 ---
+
+        // スクエア（四角形）の状態
+        const square = {
+            x: 100, // 左寄りに配置
+            y: canvas.height - 50 - 50, // 地面より少し上に配置
+            width: 50,
+            height: 50,
+            color: 'blue',
+            velocityY: 0, // 垂直方向の速度 (ジャンプの力)
+            isJumping: false // ジャンプ中かどうか
+        };
+
+        // 地面の状態 (ここではY座標は固定で、X座標をスクロールさせる)
+        const ground = {
+            x: 0, // 地面の開始X座標
+            y: canvas.height - 50, // 地面のY座標
+            width: canvas.width, // Canvasの幅と同じ
+            height: 50,
+            color: '#8B4513' // 茶色
+        };
+
+        // 背景の状態 (より大きな背景をスクロールさせるため、幅はCanvasの2倍にする)
+        const background = {
+            x: 0, // 背景の開始X座標
+            y: 0,
+            width: canvas.width * 2, // 幅をCanvasの2倍にする (ループのため)
+            height: canvas.height,
+            color: '#ADD8E6' // 水色
+        };
+
+        // --- 描画関数 ---
+
+        // 背景を描画
+        function drawBackground() {
+            ctx.fillStyle = background.color;
+            ctx.fillRect(background.x, background.y, background.width, background.height);
+            // 背景がループするように、2つ目の背景を描画
+            ctx.fillRect(background.x + background.width, background.y, background.width, background.height);
+        }
+
+        // 地面を描画
+        function drawGround() {
+            ctx.fillStyle = ground.color;
+            ctx.fillRect(ground.x, ground.y, ground.width, ground.height);
+            // 地面がループするように、2つ目の地面を描画
+            ctx.fillRect(ground.x + ground.width, ground.y, ground.width, ground.height);
+        }
+
+        // スクエアを描画
+        function drawSquare() {
+            ctx.fillStyle = square.color;
+            ctx.fillRect(square.x, square.y, square.width, square.height);
+        }
+
+        // --- 更新関数 (フレームごとに呼ばれる) ---
+        function update() {
+            // スクエアのジャンプ処理
+            if (square.isJumping) {
+                square.y += square.velocityY; // 現在の速度でY座標を更新
+                square.velocityY += GRAVITY; // 重力によって速度が増加 (下に加速)
+
+                // 地面に着地したかどうかの判定 (地面のY座標を使う)
+                if (square.y + square.height >= ground.y) {
+                    square.y = ground.y - square.height; // 地面にぴったり合わせる
+                    square.velocityY = 0; // 速度をゼロにする
+                    square.isJumping = false; // ジャンプを終了
+                }
+            }
+
+            // 背景のスクロール
+            background.x -= SCROLL_SPEED * 0.5; // 背景は地面より少し遅くスクロール (遠景表現)
+            // 背景が画面外に出たらループさせる
+            if (background.x <= -canvas.width) {
+                background.x = 0;
+            }
+
+            // 地面のスクロール
+            ground.x -= SCROLL_SPEED;
+            // 地面が画面外に出たらループさせる
+            if (ground.x <= -canvas.width) {
+                ground.x = 0;
+            }
+        }
+
+        // --- メインゲームループ ---
+        function gameLoop() {
+            // 1. Canvasをクリアする
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 2. ゲームの状態を更新する
+            update();
+
+            // 3. 全ての要素を描画する (描画順序が重要)
+            drawBackground(); // まず背景
+            drawGround();     // 次に地面
+            drawSquare();     // 最後にスクエア (一番手前)
+
+            // 次のフレームでgameLoop関数を再び呼び出す
+            requestAnimationFrame(gameLoop);
+        }
+
+        // --- イベントリスナー (タップ/クリックでジャンプ) ---
+        canvas.addEventListener('click', () => {
+            // ジャンプ中でない場合にのみジャンプを開始
+            if (!square.isJumping) {
+                square.velocityY = JUMP_POWER; // 上向きの力を与える
+                square.isJumping = true; // ジャンプ中に設定
+            }
+        });
+
+        // --- ゲーム開始 ---
+        gameLoop();
+    </script>
+</body>
+</html>
