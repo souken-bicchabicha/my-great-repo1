@@ -18,6 +18,8 @@
             -moz-user-select: none;
             -ms-user-select: none;
             user-select: none;
+            /* iOS/Android での長押しによるメニュー表示を無効にする */
+            -webkit-touch-callout: none;
         }
         canvas {
             border: 2px solid #333; /* Canvasの境界線 */
@@ -26,6 +28,11 @@
             -moz-user-select: none;
             -ms-user-select: none;
             user-select: none;
+             /* タップ時のハイライトを無効にする (特にモバイルWebkit) */
+            -webkit-tap-highlight-color: rgba(0,0,0,0);
+
+            /* タッチ操作の挙動を制御 (ゲーム向け) */
+            touch-action: none; /* すべてのデフォルトのタッチジェスチャーを無効化 */
         }
     </style>
 </head>
